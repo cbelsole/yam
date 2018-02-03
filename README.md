@@ -1,6 +1,6 @@
 # YAM (yet another migrator)
 
-There are [plenty of migrators](https://awesome-go.com/#database) out there most of which deal with db schema migrations in some form or another. YAM is another migrator that aims to be light weight in capabilities but heavy in useful ness.
+There are [plenty of migrators](https://awesome-go.com/#database) out there most of which deal with db schema migrations in some form or another. YAM is another migrator that aims to be light weight in capabilities but heavy in usefulness.
 
 ## Example:
 ```go
