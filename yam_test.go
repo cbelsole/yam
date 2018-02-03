@@ -1,4 +1,4 @@
-package migrated
+package yam
 
 import (
 	"errors"

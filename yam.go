@@ -1,4 +1,4 @@
-package migrated
+package yam
 
 import (
 	"sort"
@@ -13,15 +13,15 @@ type (
 		Up      func() error
 		Down    func() error
 	}
-	MigrationSlice []Migration
+	migrationSlice []Migration
 )
 
 func (m Migration) String() string { return strconv.Itoa(m.Version) }
 
-func (m MigrationSlice) Len() int           { return len(m) }
-func (m MigrationSlice) Swap(i, j int)      { m[i], m[j] = m[j], m[i] }
-func (m MigrationSlice) Less(i, j int) bool { return m[i].Version < m[j].Version }
-func (m MigrationSlice) first(n int) MigrationSlice {
+func (m migrationSlice) Len() int           { return len(m) }
+func (m migrationSlice) Swap(i, j int)      { m[i], m[j] = m[j], m[i] }
+func (m migrationSlice) Less(i, j int) bool { return m[i].Version < m[j].Version }
+func (m migrationSlice) first(n int) migrationSlice {
 	if n == 0 {
 		return m
 	}
@@ -30,7 +30,7 @@ func (m MigrationSlice) first(n int) MigrationSlice {
 
 // Sow runs migrations without validating with additional offset to run the
 // first (offset) migrations
-func Sow(migrations MigrationSlice, offset int) error {
+func Sow(migrations migrationSlice, offset int) error {
 	sort.Sort(migrations)
 	for _, migration := range migrations.first(offset) {
 		if migration.Up != nil {
@@ -43,7 +43,7 @@ func Sow(migrations MigrationSlice, offset int) error {
 }
 
 // Reap runs migration without validating in reverse order
-func Reap(migrations MigrationSlice, offset int) error {
+func Reap(migrations migrationSlice, offset int) error {
 	sort.Sort(sort.Reverse(migrations))
 	for _, migration := range migrations.first(offset) {
 		if migration.Down != nil {
@@ -56,11 +56,11 @@ func Reap(migrations MigrationSlice, offset int) error {
 }
 
 // Migrate runs migrations after validating that they have not been run
-func Migrate(dburl string, migrations MigrationSlice, offset int) {
+func Migrate(dburl string, migrations migrationSlice, offset int) {
 
 }
 
 // Rollback runs migrations after validating that they have not been run
-func Rollback(dburl string, migrations MigrationSlice, offset int) {
+func Rollback(dburl string, migrations migrationSlice, offset int) {
 
 }
