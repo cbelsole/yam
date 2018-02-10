@@ -5,36 +5,36 @@ import (
 	"testing"
 )
 
-func TestSow(t *testing.T) {
+func TestMigrate(t *testing.T) {
 	migrationError := errors.New("migration error")
 	data := make(map[string]int, 0)
 	tests := []struct {
 		name       string
-		migrations MigrationSlice
-		offset     int
+		migrations migrationSlice
+		offset     int64
 		err        error
 		expected   int
 	}{
 		{
-			name: "sow",
+			name: "migrate",
 			migrations: []Migration{
 				{
-					Version: 2,
+					Version: 1,
 					Up: func() error {
-						if data["sow"] != 1 {
-							return errors.New(`data["sow"] should be 1`)
+						if data["migrate"] != 0 {
+							return errors.New(`data["migrate"] should be 0`)
 						}
-						data["sow"]++
+						data["migrate"]++
 						return nil
 					},
 				},
 				{
-					Version: 1,
+					Version: 2,
 					Up: func() error {
-						if data["sow"] != 0 {
-							return errors.New(`data["sow"] should be 0`)
+						if data["migrate"] != 1 {
+							return errors.New(`data["migrate"] should be 1`)
 						}
-						data["sow"]++
+						data["migrate"]++
 						return nil
 					},
 				},
@@ -45,25 +45,25 @@ func TestSow(t *testing.T) {
 			expected: 2,
 		},
 		{
-			name: "sow with offset",
+			name: "migrateWithOffset",
 			migrations: []Migration{
 				{
-					Version: 2,
+					Version: 1,
 					Up: func() error {
-						if data["sow with offset"] != 1 {
-							return errors.New(`data["sow with offset"] should be 1`)
+						if data["migrateWithOffset"] != 0 {
+							return errors.New(`data["migrateWithOffset"] should be 0`)
 						}
-						data["sow with offset"]++
+						data["migrateWithOffset"]++
 						return nil
 					},
 				},
 				{
-					Version: 1,
+					Version: 2,
 					Up: func() error {
-						if data["sow with offset"] != 0 {
-							return errors.New(`data["sow with offset"] should be 0`)
+						if data["migrateWithOffset"] != 1 {
+							return errors.New(`data["migrateWithOffset"] should be 1`)
 						}
-						data["sow with offset"]++
+						data["migrateWithOffset"]++
 						return nil
 					},
 				},
@@ -90,45 +90,45 @@ func TestSow(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := Sow(tt.migrations, tt.offset); err != nil && err != tt.err {
-				t.Errorf("Sow() expected `%v` but received `%v`", tt.err, err)
+			if err := Migrate(nil, tt.migrations, tt.offset); err != nil && err != tt.err {
+				t.Errorf("Migrate() expected `%v` but received `%v`", tt.err, err)
 			} else if data[tt.name] != tt.expected {
-				t.Errorf("Sow() expected `%d` but received `%d`", tt.expected, data[tt.name])
+				t.Errorf("Migrate() expected `%d` but received `%d`", tt.expected, data[tt.name])
 			}
 		})
 	}
 }
 
-func TestReap(t *testing.T) {
+func TestRollback(t *testing.T) {
 	migrationError := errors.New("migration error")
 	data := make(map[string]int, 0)
 	tests := []struct {
 		name       string
-		migrations MigrationSlice
-		offset     int
+		migrations migrationSlice
+		offset     int64
 		err        error
 		expected   int
 	}{
 		{
-			name: "reap",
+			name: "rollback",
 			migrations: []Migration{
 				{
-					Version: 2,
+					Version: 1,
 					Down: func() error {
-						if data["reap"] != 0 {
-							return errors.New(`data["reap"] should be 0`)
+						if data["rollback"] != 1 {
+							return errors.New(`data["rollback"] should be 1`)
 						}
-						data["reap"]++
+						data["rollback"]++
 						return nil
 					},
 				},
 				{
-					Version: 1,
+					Version: 2,
 					Down: func() error {
-						if data["reap"] != 1 {
-							return errors.New(`data["reap"] should be 1`)
+						if data["rollback"] != 0 {
+							return errors.New(`data["rollback"] should be 0`)
 						}
-						data["reap"]++
+						data["rollback"]++
 						return nil
 					},
 				},
@@ -139,25 +139,25 @@ func TestReap(t *testing.T) {
 			expected: 2,
 		},
 		{
-			name: "reap with offset",
+			name: "rollbackWithOffset",
 			migrations: []Migration{
 				{
-					Version: 2,
+					Version: 1,
 					Down: func() error {
-						if data["reap with offset"] != 0 {
-							return errors.New(`data["reap with offset"] should be 0`)
+						if data["rollbackWithOffset"] != 1 {
+							return errors.New(`data["rollbackWithOffset"] should be 1`)
 						}
-						data["reap with offset"]++
+						data["rollbackWithOffset"]++
 						return nil
 					},
 				},
 				{
-					Version: 1,
+					Version: 2,
 					Down: func() error {
-						if data["reap with offset"] != 1 {
-							return errors.New(`data["reap with offset"] should be 1`)
+						if data["rollbackWithOffset"] != 0 {
+							return errors.New(`data["rollbackWithOffset"] should be 0`)
 						}
-						data["reap with offset"]++
+						data["rollbackWithOffset"]++
 						return nil
 					},
 				},
@@ -184,10 +184,10 @@ func TestReap(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := Reap(tt.migrations, tt.offset); err != nil && err != tt.err {
-				t.Errorf("Reap() expected `%v` but received `%v`", tt.err, err)
+			if err := Rollback(nil, tt.migrations, tt.offset); err != nil && err != tt.err {
+				t.Errorf("Rollback() expected `%v` but received `%v`", tt.err, err)
 			} else if data[tt.name] != tt.expected {
-				t.Errorf("Reap() expected `%d` but received `%d`", tt.expected, data[tt.name])
+				t.Errorf("Rollback() expected `%d` but received `%d`", tt.expected, data[tt.name])
 			}
 		})
 	}

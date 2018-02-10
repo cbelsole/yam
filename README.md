@@ -14,7 +14,7 @@ import (
 )
 
 func main() {
-	db, err := sql.Open("postgres", "postgres://localhost:5432/database?sslmode=enable")
+	db, err := sql.Open("postgres", "postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable")
 	if err != nil {
 		panic(err)
 	}
@@ -24,23 +24,74 @@ func main() {
 		{
 			Version: 0,
 			Up: func() error {
-				_, err := db.Exec("INSERT INTO users (name) VALUES ($1)", "gopher")
+				_, err := db.Exec(`CREATE TABLE users(
+					id SERIAL PRIMARY KEY,
+					name text not null
+				);`)
 				return err
 			},
 			Down: func() error {
-				_, err := db.Exec("DELETE FROM users WHERE name = $1", "gopher")
+				_, err := db.Exec("DROP TABLE USERS")
+				return err
+			},
+		},
+		{
+			Version: 1,
+			Up: func() error {
+				_, err := db.Exec("INSERT INTO users (name) VALUES ($1);", "gopher")
+				return err
+			},
+			Down: func() error {
+				_, err := db.Exec("DELETE FROM users WHERE name = $1;", "gopher")
 				return err
 			},
 		},
 	}
 
-	yam.Sow(migrations, 0)
-	yam.Reap(migrations, 0)
-}
+	// Running migrations without migrator skips version checks
+	if err := yam.Migrate(nil, migrations, 0); err != nil {
+		panic(err)
+	}
+	if err := yam.Rollback(nil, migrations, 0); err != nil {
+		panic(err)
+	}
 
+	pg, err := yam.NewPostgres("postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable")
+	if err != nil {
+		panic(err)
+	}
+
+	if err = yam.Migrate(pg, migrations, 0); err != nil {
+		panic(err)
+	}
+
+	pg, err = yam.NewPostgres("postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable")
+	if err != nil {
+		panic(err)
+	}
+
+	if err = yam.Rollback(pg, migrations, 0); err != nil {
+		panic(err)
+	}
+}
 ```
 
 ## Use cases
 * Seeding data for different environments.
 * Bootstrapping environments with data
 * Running onetime scripts for data migrations
+
+## Running tests
+```
+# testing without integrations
+go test ./... -short
+
+# testing with integrations
+docker-compose up
+go test ./...
+```
+
+## Integrations
+* postgres
+
+Pull requests welcome
