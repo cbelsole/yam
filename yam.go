@@ -1,7 +1,7 @@
 package yam
 
 // Migrate runs migrations after validating that they have not been run
-func Migrate(m migrator, migrations migrationSlice, offset int64) error {
+func Migrate(m Migrator, migrations migrationSlice, offset int64) error {
 	if m != nil {
 		if err := m.setup(); err != nil {
 			return err
@@ -41,7 +41,7 @@ func Migrate(m migrator, migrations migrationSlice, offset int64) error {
 }
 
 // Rollback runs migrations after validating that they have not been run
-func Rollback(m migrator, migrations migrationSlice, offset int64) error {
+func Rollback(m Migrator, migrations migrationSlice, offset int64) error {
 	if m != nil {
 		if err := m.setup(); err != nil {
 			return err

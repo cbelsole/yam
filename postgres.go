@@ -11,7 +11,7 @@ type postgres struct {
 }
 
 // assert postgres implements migrator
-var _ migrator = &postgres{}
+var _ Migrator = &postgres{}
 
 // NewPostgres creates a new postgres migrator
 func NewPostgres(url string) (*postgres, error) {

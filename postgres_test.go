@@ -18,7 +18,7 @@ func TestPostgresMigrate(t *testing.T) {
 	tests := []struct {
 		name       string
 		migrations migrationSlice
-		migrator   func(*testing.T) migrator
+		migrator   func(*testing.T) Migrator
 		offset     int64
 		err        error
 		expected   int
@@ -77,7 +77,7 @@ func TestPostgresRollback(t *testing.T) {
 	tests := []struct {
 		name       string
 		migrations migrationSlice
-		migrator   func(*testing.T) migrator
+		migrator   func(*testing.T) Migrator
 		offset     int64
 		err        error
 		expected   int
@@ -163,7 +163,7 @@ func cleanupMigrations() {
 
 }
 
-func testPostgresMigrator(t *testing.T) migrator {
+func testPostgresMigrator(t *testing.T) Migrator {
 	pg, err := NewPostgres("postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable")
 	if err != nil {
 		t.Error("error initializing pg migrator for `migratePostgres`")

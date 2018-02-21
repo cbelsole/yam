@@ -9,7 +9,7 @@ type (
 		Down    func() error
 	}
 	migrationSlice []Migration
-	migrator       interface {
+	Migrator       interface {
 		checkVersion(int64) (bool, error)
 		deleteVersion(int64) error
 		setup() error
