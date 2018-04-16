@@ -49,7 +49,7 @@ func TestPostgresMigrate(t *testing.T) {
 		},
 		{
 			name:     "migratePostgresFromDB",
-			migrator: testPostgresMigratorFromDb(t, db),
+			migrator: NewPostgresFromDB(db),
 			migrations: []Migration{
 				{
 					Version: 1,
@@ -132,7 +132,7 @@ func TestPostgresRollback(t *testing.T) {
 		},
 		{
 			name:     "migrateRollbackFromDB",
-			migrator: testPostgresMigratorFromDb(t, db),
+			migrator: NewPostgresFromDB(db),
 			migrations: []Migration{
 				{
 					Version: 1,
@@ -218,8 +218,4 @@ func testPostgresMigrator(t *testing.T) Migrator {
 	}
 	return pg
 
-}
-
-func testPostgresMigratorFromDb(t *testing.T, db *sql.DB) Migrator {
-	return NewPostgresFromDB(db)
 }
