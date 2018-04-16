@@ -65,7 +65,7 @@ func main() {
 		panic(err)
 	}
 
-	pg = yam.NewPostgres("postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable")
+	pg, err = yam.NewPostgres("postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable")
 	if err != nil {
 		panic(err)
 	}
@@ -76,7 +76,7 @@ func main() {
 
 	// NewPostgresFromDB does not clean up the connection. So you can reuse the
 	// migrator.
-	pg, err = yam.NewPostgresFromDB(db)
+	pg = yam.NewPostgresFromDB(db)
 	if err = yam.Migrate(pg, migrations, 0); err != nil {
 		panic(err)
 	}
