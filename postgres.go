@@ -7,20 +7,28 @@ import (
 )
 
 type postgres struct {
-	db *sql.DB
+	db      *sql.DB
+	closeDB bool
 }
 
 // assert postgres implements migrator
 var _ Migrator = &postgres{}
 
-// NewPostgres creates a new postgres migrator
+// NewPostgres creates a new postgres migrator from a new connection which
+// cleans itself up after migrations are complete.
 func NewPostgres(url string) (*postgres, error) {
 	db, err := sql.Open("postgres", url)
 	if err != nil {
 		return nil, err
 	}
 
-	return &postgres{db}, err
+	return &postgres{db: db, closeDB: true}, err
+}
+
+// NewPostgresFromDB creates a new postgres migrator from an existing connection
+// which does not clean itself up after migrations are complete.
+func NewPostgresFromDB(db *sql.DB) *postgres {
+	return &postgres{db: db, closeDB: false}
 }
 
 func (p *postgres) setup() error {
@@ -74,4 +82,10 @@ func (p *postgres) deleteVersion(version int64) error {
 	return nil
 }
 
-func (p *postgres) teardown() error { return p.db.Close() }
+func (p *postgres) teardown() error {
+	if p.closeDB {
+		return p.db.Close()
+	}
+
+	return nil
+}
