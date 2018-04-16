@@ -14,18 +14,25 @@ func TestPostgresMigrate(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping postgres tests")
 	}
+
+	db, err := sql.Open("postgres", "postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable")
+	if err != nil {
+		t.Errorf("error initializing pg migrator from db: %s", err)
+	}
+	defer db.Close()
+
 	data := make(map[string]int, 0)
 	tests := []struct {
 		name       string
 		migrations migrationSlice
-		migrator   func(*testing.T) Migrator
+		migrator   Migrator
 		offset     int64
 		err        error
 		expected   int
 	}{
 		{
 			name:     "migratePostgres",
-			migrator: testPostgresMigrator,
+			migrator: testPostgresMigrator(t),
 			migrations: []Migration{
 				{
 					Version: 1,
@@ -40,11 +47,28 @@ func TestPostgresMigrate(t *testing.T) {
 			},
 			expected: 1,
 		},
+		{
+			name:     "migratePostgresFromDB",
+			migrator: NewPostgresFromDB(db),
+			migrations: []Migration{
+				{
+					Version: 1,
+					Up: func() error {
+						if data["migratePostgresFromDB"] != 0 {
+							return errors.New(`data["migratePostgresFromDB"] should be 0`)
+						}
+						data["migratePostgresFromDB"]++
+						return nil
+					},
+				},
+			},
+			expected: 1,
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if err := Migrate(tt.migrator(t), tt.migrations, tt.offset); err != nil && err != tt.err {
+			if err := Migrate(tt.migrator, tt.migrations, tt.offset); err != nil && err != tt.err {
 				t.Errorf("Migrate() expected `%v` but received `%v`", tt.err, err)
 			} else if data[tt.name] != tt.expected {
 				t.Errorf("Migrate() expected `%d` but received `%d`", tt.expected, data[tt.name])
@@ -73,18 +97,24 @@ func TestPostgresRollback(t *testing.T) {
 		t.Skip("skipping postgres tests")
 	}
 
+	db, err := sql.Open("postgres", "postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable")
+	if err != nil {
+		t.Errorf("error initializing pg migrator from db: %s", err)
+	}
+	defer db.Close()
+
 	data := make(map[string]int, 0)
 	tests := []struct {
 		name       string
 		migrations migrationSlice
-		migrator   func(*testing.T) Migrator
+		migrator   Migrator
 		offset     int64
 		err        error
 		expected   int
 	}{
 		{
 			name:     "migrateRollback",
-			migrator: testPostgresMigrator,
+			migrator: testPostgresMigrator(t),
 			migrations: []Migration{
 				{
 					Version: 1,
@@ -94,6 +124,24 @@ func TestPostgresRollback(t *testing.T) {
 							return errors.New(`data["migrateRollback"] should be 0`)
 						}
 						data["migrateRollback"]++
+						return nil
+					},
+				},
+			},
+			expected: 1,
+		},
+		{
+			name:     "migrateRollbackFromDB",
+			migrator: NewPostgresFromDB(db),
+			migrations: []Migration{
+				{
+					Version: 1,
+					Up:      func() error { return nil },
+					Down: func() error {
+						if data["migrateRollbackFromDB"] != 0 {
+							return errors.New(`data["migrateRollbackFromDB"] should be 0`)
+						}
+						data["migrateRollbackFromDB"]++
 						return nil
 					},
 				},
@@ -110,7 +158,7 @@ func TestPostgresRollback(t *testing.T) {
 				t.Errorf("test migrator error: %s", err)
 			}
 
-			if err := Rollback(tt.migrator(t), tt.migrations, tt.offset); err != nil && err != tt.err {
+			if err := Rollback(tt.migrator, tt.migrations, tt.offset); err != nil && err != tt.err {
 				t.Errorf("Rollback() expected `%v` but received `%v`", tt.err, err)
 			} else if data[tt.name] != tt.expected {
 				t.Errorf("Rollback() expected `%d` but received `%d`", tt.expected, data[tt.name])
@@ -166,7 +214,7 @@ func cleanupMigrations() {
 func testPostgresMigrator(t *testing.T) Migrator {
 	pg, err := NewPostgres("postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable")
 	if err != nil {
-		t.Error("error initializing pg migrator for `migratePostgres`")
+		t.Errorf("error initializing pg migrator: %s", err)
 	}
 	return pg
 
